@@ -1,0 +1,17 @@
+Bubble
+
+Bubble is a toy language targeting web browsers.
+That means JavaScript.
+
+Don't expect much at this point.
+
+$ go get github.com/kr/bubble
+$ npm install js-beautify # for debug output
+$ cat >hello.b
+func main() {
+    println("hello, world")
+}
+$ bubble hello.b
+$ bubble -d hello.b
+$ bubble -o hello.js hello.b
+$ node hello.js

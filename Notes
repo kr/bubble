@@ -1,0 +1,28 @@
+No idea about the syntax. Implicit types.
+Piggyback on JavaScript.
+
+func f(x) {
+}
+
+func f(x, y) {
+}
+
+Potential bootstrap helpers
+
+println(v)
+
+    Prints the value v (mainly for debugging the bubble compiler
+    and runtime).
+
+js_global(name)
+
+    Returns the raw js value in the named global variable.
+
+js_field(x, name)
+
+    Returns the raw js value in the named field of raw js value x.
+
+js_call(f, this, arg...)
+
+    Calls the raw js function or method f with the given 'this'
+    parameter and args.
