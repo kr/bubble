@@ -9,7 +9,13 @@ import (
 
 // Convert converts into CPS from the minimal functional
 // language defined in package fun.
-func Convert(exp fun.Exp, c func(Value) Exp) Exp {
+func Convert(exp fun.Exp, r *Var) Exp {
+	return conv(exp, func(v Value) Exp {
+		return App{r, []Value{v}}
+	})
+}
+
+func conv(exp fun.Exp, c func(Value) Exp) Exp {
 	switch exp := exp.(type) {
 	case *fun.Var:
 		return c(cpsvar(exp))
@@ -35,13 +41,13 @@ func Convert(exp fun.Exp, c func(Value) Exp) Exp {
 			return r
 		})
 	case fun.Select:
-		return Convert(exp.Rec, func(v Value) Exp {
+		return conv(exp.Rec, func(v Value) Exp {
 			w := new(Var)
 			return Select{exp.I, v, w, c(w)}
 		})
 	case fun.Switch:
 		if isBool(exp) {
-			return Convert(exp.Value, func(v Value) Exp {
+			return conv(exp.Value, func(v Value) Exp {
 				k := new(Var)
 				x := new(Var)
 				return Fix{
@@ -53,10 +59,10 @@ func Convert(exp fun.Exp, c func(Value) Exp) Exp {
 						Vs: []Value{v, Int(0)},
 						Ws: nil,
 						Es: []Exp{
-							Convert(exp.Default, func(z Value) Exp {
+							conv(exp.Default, func(z Value) Exp {
 								return App{k, []Value{z}}
 							}),
-							Convert(exp.Cases[0].Body, func(z Value) Exp {
+							conv(exp.Cases[0].Body, func(z Value) Exp {
 								return App{k, []Value{z}}
 							}),
 						},
@@ -72,7 +78,7 @@ func Convert(exp fun.Exp, c func(Value) Exp) Exp {
 			op := prim.Op(f)
 			switch {
 			case op.NArg() == 1 && op.NRes() == 0:
-				return Convert(exp.V, func(v Value) Exp {
+				return conv(exp.V, func(v Value) Exp {
 					return Primop{
 						op,
 						[]Value{v},
@@ -81,7 +87,7 @@ func Convert(exp fun.Exp, c func(Value) Exp) Exp {
 					}
 				})
 			case op.NArg() == 1 && op.NRes() == 1:
-				return Convert(exp.V, func(v Value) Exp {
+				return conv(exp.V, func(v Value) Exp {
 					w := new(Var)
 					return Primop{
 						op,
@@ -113,8 +119,8 @@ func Convert(exp fun.Exp, c func(Value) Exp) Exp {
 				[]FixEnt{
 					{r, []*Var{x}, c(x)},
 				},
-				Convert(exp.F, func(f Value) Exp {
-					return Convert(exp.V, func(e Value) Exp {
+				conv(exp.F, func(f Value) Exp {
+					return conv(exp.V, func(e Value) Exp {
 						return App{f, []Value{e, r}}
 					})
 				}),
@@ -123,14 +129,14 @@ func Convert(exp fun.Exp, c func(Value) Exp) Exp {
 	case fun.Fix:
 		return Fix{
 			fixfnl(exp.Names, exp.Fns),
-			Convert(exp.Body, c),
+			conv(exp.Body, c),
 		}
 	case fun.Fn:
 		f := new(Var)
 		k := new(Var)
 		return Fix{
 			[]FixEnt{
-				{f, []*Var{cpsvar(exp.V), k}, Convert(exp.Body, func(z Value) Exp {
+				{f, []*Var{cpsvar(exp.V), k}, conv(exp.Body, func(z Value) Exp {
 					return App{k, []Value{z}}
 				})},
 			},
@@ -150,7 +156,7 @@ func fixfnl(h []*fun.Var, b []fun.Fn) (vs []FixEnt) {
 		vs = append(vs, FixEnt{
 			cpsvar(h[i]),
 			[]*Var{cpsvar(f.V), w},
-			Convert(f.Body, func(z Value) Exp {
+			conv(f.Body, func(z Value) Exp {
 				return App{w, []Value{z}}
 			}),
 		})
@@ -164,7 +170,7 @@ func fl(expl []fun.Exp, c func([]Value) Exp) Exp {
 		if len(expl) == 0 {
 			return c(w)
 		}
-		return Convert(expl[0], func(v Value) Exp {
+		return conv(expl[0], func(v Value) Exp {
 			return g(expl[1:], append(w, v))
 		})
 	}

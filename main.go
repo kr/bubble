@@ -50,16 +50,13 @@ func main() {
 		pretty.Fprintf(os.Stderr, "% #v\n", ast)
 	}
 
-	funp := fun.Conv(ast)
+	funp := fun.Convert(ast)
 	if *flagD {
 		pretty.Fprintf(os.Stderr, "% #v\n", funp)
 	}
 
 	r := &cps.Var{"exit"}
-	c := func(v cps.Value) cps.Exp {
-		return cps.App{r, []cps.Value{v}}
-	}
-	cexp := cps.Convert(funp, c)
+	cexp := cps.Convert(funp, r)
 	if *flagD {
 		pretty.Fprintf(os.Stderr, "% #v\n", cexp)
 	}

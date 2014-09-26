@@ -10,7 +10,7 @@ import (
 	"github.com/kr/bubble/prim"
 )
 
-func Conv(p *ast.Program) Exp {
+func Convert(p *ast.Program) Exp {
 	r := env0
 	r = bindlit(r, "false", Int(0))
 	r = bindlit(r, "true", Int(1))
