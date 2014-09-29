@@ -64,14 +64,7 @@ func conv(node ast.Node, r env) Exp {
 	case *ast.BasicLit:
 		return convlit(node.Kind, node.Value)
 	case *ast.CallExpr:
-		switch len(node.Args) {
-		case 0:
-			return App{conv(node.Fun, r), Int(0)}
-		case 1:
-			return App{conv(node.Fun, r), conv(node.Args[0], r)}
-		default:
-			return App{conv(node.Fun, r), Record(convl(node.Args, r))}
-		}
+		return App{conv(node.Fun, r), Record(convl(node.Args, r))}
 	case *ast.BinaryExpr:
 		el := []Exp{conv(node.X, r), conv(node.Y, r)}
 		return App{convprim(node.Op), Record(el)}
@@ -158,24 +151,16 @@ func convfix(fl []*ast.FuncDecl, exp ast.Node, r env) Exp {
 }
 
 func convfunc(params []*ast.Ident, body ast.Node, r env) Fn {
-	switch len(params) {
-	case 0:
-		return Fn{new(Var), conv(body, r)}
-	case 1:
-		r, v := bindvar(r, params[0])
-		return Fn{v, conv(body, r)}
-	default:
-		v := new(Var)
-		var pl []*Var
-		for _, s := range params {
-			var p *Var
-			r, p = bindvar(r, s)
-			pl = append(pl, p)
-		}
-		exp := conv(body, r)
-		for i, p := range pl {
-			exp = App{Fn{p, exp}, Select{i, v}}
-		}
-		return Fn{v, exp}
+	v := new(Var)
+	var pl []*Var
+	for _, s := range params {
+		var p *Var
+		r, p = bindvar(r, s)
+		pl = append(pl, p)
 	}
+	exp := conv(body, r)
+	for i, p := range pl {
+		exp = App{Fn{p, exp}, Select{i, v}}
+	}
+	return Fn{v, exp}
 }

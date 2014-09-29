@@ -6,7 +6,7 @@ import "github.com/kr/bubble/prim"
 func genPrim(op prim.Op, dl, wl, cl []string) string {
 	switch op {
 	case prim.Println:
-		return `console.log(` + dl[0] + `);` + cl[0]
+		return `console.log.apply(null, ` + dl[0] + `);` + cl[0]
 	case prim.Add:
 		return `var ` + wl[0] + ` = ` + dl[0] + ` + ` + dl[1] + `;` + cl[0]
 	case prim.Mul:
