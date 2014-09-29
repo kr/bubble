@@ -12,9 +12,9 @@ import (
 
 func Convert(p *ast.Program) Exp {
 	r := env0
-	r = bindlit(r, "false", Int(0))
-	r = bindlit(r, "true", Int(1))
-	r = bindlit(r, "println", Prim(prim.Println))
+	r = bind(r, "false", Int(0))
+	r = bind(r, "true", Int(1))
+	r = bind(r, "println", Prim(prim.Println))
 	return conv(p, r)
 }
 
@@ -26,32 +26,20 @@ func env0(name *ast.Ident) Exp {
 	panic("undefined: " + name.Name)
 }
 
-// e must be a sanitary expression
-// (e.g. literal constant int or operator)
-type symbol struct {
-	v *Var
-	e Exp
-}
-
-func bindlit(r env, name string, e Exp) env {
-	return bind(r, name, symbol{e: e})
-}
-
 // bindvar augments r with a newly introduced *Var bound to name.
 func bindvar(r env, name *ast.Ident) (env, *Var) {
 	v := new(Var)
 	v.Ident = name.Name
-	return bind(r, name.Name, symbol{v: v}), v
+	return bind(r, name.Name, v), v
 
 }
 
-func bind(r env, name string, sym symbol) env {
+// e must be a sanitary expression
+// (e.g. var, literal constant int, or operator)
+func bind(r env, name string, e Exp) env {
 	return func(get *ast.Ident) Exp {
 		if get.Name == name {
-			if sym.v != nil {
-				return sym.v
-			}
-			return sym.e
+			return e
 		}
 		return r(get)
 	}
