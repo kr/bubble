@@ -185,7 +185,13 @@ func (p *parser) parseExpr() ast.Expr {
 }
 
 func (p *parser) parseTerm() ast.Expr {
-	return p.parseCall()
+	e := p.parseCall()
+	switch t := p.tok; t {
+	case token.MUL:
+		p.next()
+		return &ast.BinaryExpr{X: e, Op: t, Y: p.parseTerm()}
+	}
+	return e
 }
 
 func (p *parser) parseCall() ast.Expr {

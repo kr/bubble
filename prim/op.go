@@ -9,6 +9,7 @@ type Op int
 const (
 	Println Op = iota
 	Add
+	Mul
 	Lt
 	Ineq
 )
@@ -16,6 +17,7 @@ const (
 var opNames = [...]string{
 	Println: "Println",
 	Add:     "Add",
+	Mul:     "Mul",
 	Lt:      "Lt",
 	Ineq:    "Ineq",
 }
@@ -23,6 +25,7 @@ var opNames = [...]string{
 var opNArg = [...]int{
 	Println: 1,
 	Add:     2,
+	Mul:     2,
 	Lt:      2,
 	Ineq:    2,
 }
@@ -30,6 +33,7 @@ var opNArg = [...]int{
 var opNRes = [...]int{
 	Println: 0,
 	Add:     1,
+	Mul:     1,
 	Lt:      0,
 	Ineq:    0,
 }

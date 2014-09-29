@@ -62,6 +62,7 @@ type Prim prim.Op
 
 var primOps = [...]prim.Op{
 	token.ADD: prim.Add,
+	token.MUL: prim.Mul,
 }
 
 type Record []Exp

@@ -3,6 +3,7 @@ package sem
 import (
 	"fmt"
 	"io"
+
 	"github.com/kr/bubble/prim"
 )
 
@@ -21,6 +22,10 @@ func evalPrim(op prim.Op, dl []dvalue, cl []fn) thunk {
 		i := dl[0].(dint)
 		j := dl[1].(dint)
 		return cl[0]([]dvalue{i + j})
+	case prim.Mul:
+		i := dl[0].(dint)
+		j := dl[1].(dint)
+		return cl[0]([]dvalue{i * j})
 	case prim.Lt:
 	case prim.Ineq:
 		if eq(dl[0], dl[1]) {
