@@ -222,6 +222,10 @@ func (p *parser) parseAtom() ast.Expr {
 		return &ast.BasicLit{tok, lit}
 	case token.FUNC:
 		return p.parseFuncLit()
+	case token.LPAREN:
+		p.next()
+		defer p.want(token.RPAREN)
+		return p.parseExpr()
 	}
 	// TODO(kr): don't crash here
 	log.Fatalln(p.fileSet.Position(p.pos), "error tok =", p.tok, "want ident or literal")
