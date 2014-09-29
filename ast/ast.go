@@ -8,30 +8,32 @@ type Node interface {
 	node()
 }
 
-func (*AssignStmt) node() {}
-func (*BasicLit) node()   {}
-func (*BinaryExpr) node() {}
-func (*BlockStmt) node()  {}
-func (*CallExpr) node()   {}
-func (*ExprStmt) node()   {}
-func (*FuncDecl) node()   {}
-func (*FuncLit) node()    {}
-func (*Ident) node()      {}
-func (*IfStmt) node()     {}
-func (*Program) node()    {}
-func (*ReturnStmt) node() {}
+func (*AssignStmt) node()   {}
+func (*BasicLit) node()     {}
+func (*BinaryExpr) node()   {}
+func (*BlockStmt) node()    {}
+func (*CallExpr) node()     {}
+func (*ExprStmt) node()     {}
+func (*FuncDecl) node()     {}
+func (*FuncLit) node()      {}
+func (*Ident) node()        {}
+func (*IfStmt) node()       {}
+func (*Program) node()      {}
+func (*ReturnStmt) node()   {}
+func (*ShortFuncLit) node() {}
 
 type Expr interface {
 	Node
 	exp()
 }
 
-func (*BasicLit) exp()   {}
-func (*BinaryExpr) exp() {}
-func (*CallExpr) exp()   {}
-func (*FuncDecl) exp()   {}
-func (*FuncLit) exp()    {}
-func (*Ident) exp()      {}
+func (*BasicLit) exp()     {}
+func (*BinaryExpr) exp()   {}
+func (*CallExpr) exp()     {}
+func (*FuncDecl) exp()     {}
+func (*FuncLit) exp()      {}
+func (*Ident) exp()        {}
+func (*ShortFuncLit) exp() {}
 
 type Stmt interface {
 	Node
@@ -62,6 +64,10 @@ type FuncDecl struct {
 	Name   *Ident
 	Params []*Ident
 	Body   *BlockStmt
+}
+
+type ShortFuncLit struct {
+	Body Expr
 }
 
 type FuncLit struct {

@@ -222,6 +222,10 @@ func (p *parser) parseAtom() ast.Expr {
 		return &ast.BasicLit{tok, lit}
 	case token.FUNC:
 		return p.parseFuncLit()
+	case token.AND:
+		p.next()
+		body := p.parseExpr()
+		return &ast.ShortFuncLit{Body: body}
 	case token.LPAREN:
 		p.next()
 		defer p.want(token.RPAREN)

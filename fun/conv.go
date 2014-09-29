@@ -98,6 +98,9 @@ func conv(node ast.Node, r env) Exp {
 		}
 		main := &ast.CallExpr{&ast.Ident{"main"}, nil}
 		return convfix(fl, main, r)
+	case *ast.ShortFuncLit:
+		params := []*ast.Ident{{"x"}, {"y"}, {"z"}}
+		return convfunc(params, node.Body, r)
 	default:
 		log.Printf("%T", node)
 	}
@@ -149,12 +152,12 @@ func convfix(fl []*ast.FuncDecl, exp ast.Node, r env) Exp {
 	}
 	fix.Body = conv(exp, r)
 	for _, f := range fl {
-		fix.Fns = append(fix.Fns, convfixbody(f.Params, f.Body, r))
+		fix.Fns = append(fix.Fns, convfunc(f.Params, f.Body, r))
 	}
 	return fix
 }
 
-func convfixbody(params []*ast.Ident, body ast.Stmt, r env) Fn {
+func convfunc(params []*ast.Ident, body ast.Node, r env) Fn {
 	switch len(params) {
 	case 0:
 		return Fn{new(Var), conv(body, r)}
