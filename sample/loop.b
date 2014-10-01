@@ -1,7 +1,3 @@
-func f() {
-	f()
-}
-
 func main() {
-	f()
+	(&x(x))(&x(x))
 }
