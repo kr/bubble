@@ -12,6 +12,7 @@ const (
 	Mul
 	Lt
 	Ineq
+	Callcc
 )
 
 var opNames = [...]string{
@@ -20,6 +21,7 @@ var opNames = [...]string{
 	Mul:     "Mul",
 	Lt:      "Lt",
 	Ineq:    "Ineq",
+	Callcc:  "Callcc",
 }
 
 var opNArg = [...]int{
@@ -28,6 +30,7 @@ var opNArg = [...]int{
 	Mul:     2,
 	Lt:      2,
 	Ineq:    2,
+	Callcc:  -1, // unused; special case in ../cps/conf.go
 }
 
 var opNRes = [...]int{
@@ -36,6 +39,7 @@ var opNRes = [...]int{
 	Mul:     1,
 	Lt:      0,
 	Ineq:    0,
+	Callcc:  -1, // unused; special case in ../cps/conf.go
 }
 
 func (o Op) String() string {

@@ -15,6 +15,7 @@ func Convert(p *ast.Program) Exp {
 	r = bind(r, "false", Int(0))
 	r = bind(r, "true", Int(1))
 	r = bind(r, "println", Prim(prim.Println))
+	r = bind(r, "callcc", Prim(prim.Callcc))
 	return conv(p, r)
 }
 

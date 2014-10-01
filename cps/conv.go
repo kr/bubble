@@ -78,6 +78,33 @@ func conv(exp fun.Exp, c func(Value) Exp) Exp {
 		case fun.Prim:
 			op := prim.Op(f)
 			switch {
+			case op == prim.Callcc:
+				k := newVar("")
+				x := newVar("")
+				kp := newVar("")
+				xp := newVar("")
+				wp := newVar("")
+				return Fix{
+					[]FixEnt{
+						{k, []Var{x}, c(x)},
+						{
+							kp,
+							[]Var{xp, newVar("")},
+							Select{0, xp, wp, App{k, []Value{wp}}},
+						},
+					},
+					conv(exp.V, func(v Value) Exp {
+						w := newVar("")
+						r := newVar("")
+						return Select{0, v, w,
+							Record{
+								[]RecordEnt{{kp, Offp(0)}},
+								r,
+								App{w, []Value{r, k}},
+							},
+						}
+					}),
+				}
 			case op.NArg() == 1 && op.NRes() == 0:
 				return conv(exp.V, func(v Value) Exp {
 					return Primop{
