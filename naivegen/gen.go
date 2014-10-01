@@ -22,7 +22,7 @@ function drive(f0) {
 }
 `
 
-func Gen(exp cps.Exp, r *cps.Var) string {
+func Gen(exp cps.Exp, r cps.Var) string {
 	s := `(function() {`
 	s += prelude
 	s += "function " + jsvar(r) + "() { return []; };"
@@ -88,8 +88,8 @@ func genFixent(f cps.FixEnt) string {
 	return `function ` + jsvar(f.V) + `(` + strings.Join(al, ",") + `) { ` + body + ` }`
 }
 
-func jsvar(v *cps.Var) string {
-	return fmt.Sprintf("v%p", v)
+func jsvar(v cps.Var) string {
+	return fmt.Sprintf("v%d", v.ID)
 }
 
 func genVal(v cps.Value) string {
@@ -98,9 +98,9 @@ func genVal(v cps.Value) string {
 		return strconv.Itoa(int(v))
 	case cps.String:
 		return strconv.QuoteToASCII(string(v))
-	case *cps.Var:
-		if v.Ident != "" {
-			return jsvar(v) + "/*" + v.Ident + "*/"
+	case cps.Var:
+		if v.Name != "" {
+			return jsvar(v) + "/*" + v.Name + "*/"
 		}
 		return jsvar(v)
 	}

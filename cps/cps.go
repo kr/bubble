@@ -7,9 +7,9 @@ type Value interface {
 }
 
 func (*Label) value() {}
-func (*Var) value()   {}
 func (Int) value()    {}
 func (String) value() {}
+func (Var) value()    {}
 
 type Exp interface {
 	cexp()
@@ -25,9 +25,12 @@ func (Select) cexp() {}
 func (Switch) cexp() {}
 
 type Label struct{ byte }
-type Var struct{ Ident string }
 type Int int
 type String string
+type Var struct {
+	ID   uint // nonzero for a valid Var
+	Name string
+}
 
 type App struct {
 	F  Value
@@ -35,8 +38,8 @@ type App struct {
 }
 
 type FixEnt struct {
-	V *Var
-	A []*Var
+	V Var
+	A []Var
 	B Exp
 }
 
@@ -48,7 +51,7 @@ type Fix struct {
 type Primop struct {
 	Op prim.Op
 	Vs []Value
-	Ws []*Var
+	Ws []Var
 	Es []Exp
 }
 
@@ -61,7 +64,7 @@ type RecordEnt struct {
 // to the record containing Vs.
 type Record struct {
 	Vs []RecordEnt
-	W  *Var
+	W  Var
 	E  Exp
 }
 
@@ -78,7 +81,7 @@ func (o Offp) path() {}
 type Select struct {
 	I int
 	V Value
-	W *Var
+	W Var
 	E Exp
 }
 

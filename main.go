@@ -55,8 +55,7 @@ func main() {
 		pretty.Fprintf(os.Stderr, "% #v\n", funp)
 	}
 
-	r := &cps.Var{"exit"}
-	cexp := cps.Convert(funp, r)
+	cexp, r := cps.Convert(funp)
 	if *flagD {
 		pretty.Fprintf(os.Stderr, "% #v\n", cexp)
 	}

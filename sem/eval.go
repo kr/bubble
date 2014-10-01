@@ -36,10 +36,10 @@ type answer interface{}
 
 type store interface{}
 
-type env func(v *cps.Var) dvalue
+type env func(v cps.Var) dvalue
 
-func bind(env env, v *cps.Var, d dvalue) env {
-	return func(w *cps.Var) dvalue {
+func bind(env env, v cps.Var, d dvalue) env {
+	return func(w cps.Var) dvalue {
 		if v == w {
 			return d
 		}
@@ -47,14 +47,14 @@ func bind(env env, v *cps.Var, d dvalue) env {
 	}
 }
 
-func bindn(env env, vl []*cps.Var, dl []dvalue) env {
+func bindn(env env, vl []cps.Var, dl []dvalue) env {
 	if len(vl) == 0 && len(dl) == 0 {
 		return env
 	}
 	return bindn(bind(env, vl[0], dl[0]), vl[1:], dl[1:])
 }
 
-func env0(v *cps.Var) dvalue {
+func env0(v cps.Var) dvalue {
 	panic(fmt.Errorf("undefined var %p", v))
 }
 
@@ -64,7 +64,7 @@ func val(env env, v cps.Value) dvalue {
 		return dint(v)
 	case cps.String:
 		return dstring(v)
-	case *cps.Var:
+	case cps.Var:
 		return env(v)
 	}
 	fmt.Printf("val %T\n", v)
@@ -114,8 +114,8 @@ func eval(exp cps.Exp, r env) thunk {
 	case cps.Fix:
 		var g func(env) env
 		h := func(r1 env, f struct {
-			V *cps.Var
-			A []*cps.Var
+			V cps.Var
+			A []cps.Var
 			B cps.Exp
 		}) dvalue {
 			return fn(func(al []dvalue) thunk {
@@ -123,7 +123,7 @@ func eval(exp cps.Exp, r env) thunk {
 			})
 		}
 		g = func(r env) env {
-			var nl []*cps.Var
+			var nl []cps.Var
 			for _, v := range exp.Fs {
 				nl = append(nl, v.V)
 			}
@@ -142,7 +142,7 @@ func eval(exp cps.Exp, r env) thunk {
 	panic("unreached")
 }
 
-func Eval(exp cps.Exp, r *cps.Var) answer {
+func Eval(exp cps.Exp, r cps.Var) answer {
 	f := fn(func(dl []dvalue) thunk {
 		return func(store) answer {
 			return dl[0]

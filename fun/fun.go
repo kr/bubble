@@ -13,7 +13,6 @@ type Exp interface {
 	exp()
 }
 
-func (*Var) exp()   {}
 func (App) exp()    {}
 func (Fix) exp()    {}
 func (Fn) exp()     {}
@@ -23,20 +22,32 @@ func (Record) exp() {}
 func (Select) exp() {}
 func (String) exp() {}
 func (Switch) exp() {}
+func (Var) exp()    {}
 
-type Var struct{ Ident string }
+type Var struct {
+	ID   uint
+	Name string
+}
+
+var nextVar uint
+
+// newVar returns a new Var with a unique ID
+func newVar(name string) Var {
+	nextVar++
+	return Var{ID: nextVar, Name: name}
+}
 
 type Int int
 
 type String string
 
 type Fn struct {
-	V    *Var
+	V    Var
 	Body Exp
 }
 
 type Fix struct {
-	Names []*Var
+	Names []Var
 	Fns   []Fn
 	Body  Exp
 }

@@ -9,15 +9,16 @@ import (
 
 // Convert converts into CPS from the minimal functional
 // language defined in package fun.
-func Convert(exp fun.Exp, r *Var) Exp {
+func Convert(exp fun.Exp) (Exp, Var) {
+	r := newVar("exit")
 	return conv(exp, func(v Value) Exp {
 		return App{r, []Value{v}}
-	})
+	}), r
 }
 
 func conv(exp fun.Exp, c func(Value) Exp) Exp {
 	switch exp := exp.(type) {
-	case *fun.Var:
+	case fun.Var:
 		return c(cpsvar(exp))
 	case fun.Int:
 		return c(Int(exp))
@@ -30,7 +31,7 @@ func conv(exp fun.Exp, c func(Value) Exp) Exp {
 			return c(Int(0))
 		}
 		return fl(exp, func(vs []Value) Exp {
-			x := new(Var)
+			x := newVar("")
 			r := Record{W: x, E: c(x)}
 			for _, v := range vs {
 				r.Vs = append(r.Vs, struct {
@@ -42,17 +43,17 @@ func conv(exp fun.Exp, c func(Value) Exp) Exp {
 		})
 	case fun.Select:
 		return conv(exp.Rec, func(v Value) Exp {
-			w := new(Var)
+			w := newVar("")
 			return Select{exp.I, v, w, c(w)}
 		})
 	case fun.Switch:
 		if isBool(exp) {
 			return conv(exp.Value, func(v Value) Exp {
-				k := new(Var)
-				x := new(Var)
+				k := newVar("")
+				x := newVar("")
 				return Fix{
 					[]FixEnt{
-						{k, []*Var{x}, c(x)},
+						{k, []Var{x}, c(x)},
 					},
 					Primop{
 						Op: prim.Ineq,
@@ -82,17 +83,17 @@ func conv(exp fun.Exp, c func(Value) Exp) Exp {
 					return Primop{
 						op,
 						[]Value{v},
-						[]*Var{},
+						[]Var{},
 						[]Exp{c(Int(0))},
 					}
 				})
 			case op.NArg() == 1 && op.NRes() == 1:
 				return conv(exp.V, func(v Value) Exp {
-					w := new(Var)
+					w := newVar("")
 					return Primop{
 						op,
 						[]Value{v},
-						[]*Var{w},
+						[]Var{w},
 						[]Exp{c(w)},
 					}
 				})
@@ -100,11 +101,11 @@ func conv(exp fun.Exp, c func(Value) Exp) Exp {
 				switch A := exp.V.(type) {
 				case fun.Record:
 					return fl(A, func(vs []Value) Exp {
-						w := new(Var)
+						w := newVar("")
 						return Primop{
 							op,
 							vs,
-							[]*Var{w},
+							[]Var{w},
 							[]Exp{c(w)},
 						}
 					})
@@ -113,11 +114,11 @@ func conv(exp fun.Exp, c func(Value) Exp) Exp {
 				}
 			}
 		default:
-			r := new(Var)
-			x := new(Var)
+			r := newVar("")
+			x := newVar("")
 			return Fix{
 				[]FixEnt{
-					{r, []*Var{x}, c(x)},
+					{r, []Var{x}, c(x)},
 				},
 				conv(exp.F, func(f Value) Exp {
 					return conv(exp.V, func(e Value) Exp {
@@ -132,11 +133,11 @@ func conv(exp fun.Exp, c func(Value) Exp) Exp {
 			conv(exp.Body, c),
 		}
 	case fun.Fn:
-		f := new(Var)
-		k := new(Var)
+		f := newVar("")
+		k := newVar("")
 		return Fix{
 			[]FixEnt{
-				{f, []*Var{cpsvar(exp.V), k}, conv(exp.Body, func(z Value) Exp {
+				{f, []Var{cpsvar(exp.V), k}, conv(exp.Body, func(z Value) Exp {
 					return App{k, []Value{z}}
 				})},
 			},
@@ -146,16 +147,16 @@ func conv(exp fun.Exp, c func(Value) Exp) Exp {
 	panic("unreached " + fmt.Sprintf("%T", exp))
 }
 
-func fixfnl(h []*fun.Var, b []fun.Fn) (vs []FixEnt) {
+func fixfnl(h []fun.Var, b []fun.Fn) (vs []FixEnt) {
 	if len(h) != len(b) {
 		panic("mismatch")
 	}
 	for i := range h {
 		f := b[i]
-		w := new(Var)
+		w := newVar("")
 		vs = append(vs, FixEnt{
 			cpsvar(h[i]),
-			[]*Var{cpsvar(f.V), w},
+			[]Var{cpsvar(f.V), w},
 			conv(f.Body, func(z Value) Exp {
 				return App{w, []Value{z}}
 			}),
@@ -177,16 +178,22 @@ func fl(expl []fun.Exp, c func([]Value) Exp) Exp {
 	return g(expl, nil)
 }
 
-var cpsvars = map[*fun.Var]*Var{}
+var nextVar uint
 
-func cpsvar(v *fun.Var) *Var {
-	v1, ok := cpsvars[v]
+func newVar(name string) Var {
+	nextVar++
+	return Var{ID: nextVar, Name: name}
+}
+
+var cpsvars = map[uint]Var{}
+
+func cpsvar(v fun.Var) Var {
+	v1, ok := cpsvars[v.ID]
 	if ok {
 		return v1
 	}
-	v1 = new(Var)
-	v1.Ident = v.Ident
-	cpsvars[v] = v1
+	v1 = newVar(v.Name)
+	cpsvars[v.ID] = v1
 	return v1
 }
 

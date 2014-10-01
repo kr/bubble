@@ -26,12 +26,10 @@ func env0(name *ast.Ident) Exp {
 	panic("undefined: " + name.Name)
 }
 
-// bindvar augments r with a newly introduced *Var bound to name.
-func bindvar(r env, name *ast.Ident) (env, *Var) {
-	v := new(Var)
-	v.Ident = name.Name
+// bindvar augments r with a newly introduced Var bound to name.
+func bindvar(r env, name *ast.Ident) (env, Var) {
+	v := newVar(name.Name)
 	return bind(r, name.Name, v), v
-
 }
 
 // e must be a sanitary expression
@@ -57,7 +55,7 @@ func conv(node ast.Node, r env) Exp {
 		el := []Exp{conv(node.X, r), conv(node.Y, r)}
 		return App{convprim(node.Op), Record(el)}
 	case *ast.FuncLit:
-		return Fn{new(Var), conv(node.Body, r)}
+		return Fn{newVar(""), conv(node.Body, r)}
 	case *ast.BlockStmt:
 		return convseq(node.List, r)
 	case *ast.IfStmt:
@@ -114,7 +112,7 @@ func convseq(sl []ast.Stmt, r env) Exp {
 	if len(sl) == 0 {
 		return Int(0)
 	}
-	return App{Fn{new(Var), convseq(sl[1:], r)}, conv(sl[0], r)}
+	return App{Fn{newVar(""), convseq(sl[1:], r)}, conv(sl[0], r)}
 }
 
 func convl(xl []ast.Expr, r env) (el []Exp) {
@@ -127,7 +125,7 @@ func convl(xl []ast.Expr, r env) (el []Exp) {
 func convfix(fl []*ast.FuncDecl, exp ast.Node, r env) Exp {
 	var fix Fix
 	for _, f := range fl {
-		var v *Var
+		var v Var
 		r, v = bindvar(r, f.Name)
 		fix.Names = append(fix.Names, v)
 	}
@@ -139,10 +137,10 @@ func convfix(fl []*ast.FuncDecl, exp ast.Node, r env) Exp {
 }
 
 func convfunc(params []*ast.Ident, body ast.Node, r env) Fn {
-	v := new(Var)
-	var pl []*Var
+	v := newVar("")
+	var pl []Var
 	for _, s := range params {
-		var p *Var
+		var p Var
 		r, p = bindvar(r, s)
 		pl = append(pl, p)
 	}

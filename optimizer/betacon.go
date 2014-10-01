@@ -22,7 +22,7 @@ func betaCon(exp cps.Exp) cps.Exp {
 // or returns exp unchanged.
 func betaCon1(exp cps.Exp) cps.Exp {
 	for f, s := range countfns(exp) {
-		if s.napp == 1 && s.noccur == 1 && s.V != nil {
+		if s.napp == 1 && s.noccur == 1 && s.V.ID != 0 {
 			return delFixent(betaReduce(exp, f, s.A, s.B), f)
 		}
 	}
@@ -39,10 +39,10 @@ type fncount struct {
 // the number of times it occurs as a Value,
 // the number of times it appears in function position,
 // and the Fix entry where it is bound, if any.
-func countfns(exp cps.Exp) map[*cps.Var]fncount {
-	fntab := make(map[*cps.Var]fncount)
+func countfns(exp cps.Exp) map[cps.Var]fncount {
+	fntab := make(map[cps.Var]fncount)
 	cps.WalkValues(exp, func(v cps.Value) {
-		if v, ok := v.(*cps.Var); ok {
+		if v, ok := v.(cps.Var); ok {
 			fn := fntab[v]
 			fn.noccur++
 			fntab[v] = fn
@@ -51,7 +51,7 @@ func countfns(exp cps.Exp) map[*cps.Var]fncount {
 	cps.Walk(exp, func(exp cps.Exp) {
 		switch exp := exp.(type) {
 		case cps.App:
-			if v, ok := exp.F.(*cps.Var); ok {
+			if v, ok := exp.F.(cps.Var); ok {
 				fn := fntab[v]
 				fn.napp++
 				fntab[v] = fn
@@ -70,7 +70,7 @@ func countfns(exp cps.Exp) map[*cps.Var]fncount {
 // Replaces application of f in E with B,
 // substituting the actual arguments
 // for occurrences of the formal parameters vs.
-func betaReduce(E cps.Exp, f *cps.Var, vs []*cps.Var, B cps.Exp) cps.Exp {
+func betaReduce(E cps.Exp, f cps.Var, vs []cps.Var, B cps.Exp) cps.Exp {
 	return cps.Map(E, func(exp cps.Exp) cps.Exp {
 		if app, ok := exp.(cps.App); ok && app.F == f {
 			return subVars(B, vs, app.Vs)
@@ -80,7 +80,7 @@ func betaReduce(E cps.Exp, f *cps.Var, vs []*cps.Var, B cps.Exp) cps.Exp {
 }
 
 // Deletes the definition of f where it occurs in a Fix.
-func delFixent(exp cps.Exp, f *cps.Var) cps.Exp {
+func delFixent(exp cps.Exp, f cps.Var) cps.Exp {
 	return cps.Map(exp, func(exp cps.Exp) cps.Exp {
 		if fix, ok := exp.(cps.Fix); ok {
 			var fs []cps.FixEnt
