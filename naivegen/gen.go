@@ -98,6 +98,8 @@ func genVal(v cps.Value) string {
 		return strconv.Itoa(int(v))
 	case cps.String:
 		return strconv.QuoteToASCII(string(v))
+	case cps.Undefined:
+		return "undefined"
 	case cps.Var:
 		if v.Name != "" {
 			return jsvar(v) + "/*" + v.Name + "*/"

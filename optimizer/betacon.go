@@ -1,22 +1,6 @@
 package optimizer
 
-import (
-	"reflect"
-
-	"github.com/kr/bubble/cps"
-)
-
-// Repeatedly performs 𝛽-contraction on exp
-// until no more can be performed.
-func betaCon(exp cps.Exp) cps.Exp {
-	for {
-		E1 := betaCon1(exp)
-		if reflect.DeepEqual(E1, exp) {
-			return exp
-		}
-		exp = E1
-	}
-}
+import "github.com/kr/bubble/cps"
 
 // Performs a single 𝛽-contraction on exp if possible,
 // or returns exp unchanged.

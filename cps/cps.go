@@ -6,10 +6,11 @@ type Value interface {
 	value()
 }
 
-func (*Label) value() {}
-func (Int) value()    {}
-func (String) value() {}
-func (Var) value()    {}
+func (*Label) value()    {}
+func (Int) value()       {}
+func (String) value()    {}
+func (Undefined) value() {}
+func (Var) value()       {}
 
 type Exp interface {
 	cexp()
@@ -27,10 +28,13 @@ func (Switch) cexp() {}
 type Label struct{ byte }
 type Int int
 type String string
+type Undefined struct{}
 type Var struct {
 	ID   uint // nonzero for a valid Var
 	Name string
 }
+
+var Undef = Undefined{}
 
 type App struct {
 	F  Value

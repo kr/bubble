@@ -1,13 +1,42 @@
 package optimizer
 
-import "github.com/kr/bubble/cps"
+import (
+	"reflect"
+
+	"github.com/kr/bubble/cps"
+)
 
 // Optimize transforms exp in various ways
 // in an attempt to improve code size
 // or execution speed.
 func Optimize(exp cps.Exp) cps.Exp {
-	exp = betaCon(exp)
+	return fixedPoint(optimize1, exp)
+}
+
+var optimizers = []func(cps.Exp) cps.Exp{
+	betaCon1,
+	selectFold1,
+}
+
+// optimize1 performs a single optimization pass:
+// it applies each optimization function repeatedly
+// until it produces no change, then moves on to
+// the next function.
+func optimize1(exp cps.Exp) cps.Exp {
+	for _, f := range optimizers {
+		exp = fixedPoint(f, exp)
+	}
 	return exp
+}
+
+// Finds the fixed point of f: iterates expᵢ₊₁ = f(expᵢ)
+// until the result is unchanged.
+func fixedPoint(f func(cps.Exp) cps.Exp, exp cps.Exp) cps.Exp {
+	exp1 := f(exp)
+	if reflect.DeepEqual(exp1, exp) {
+		return exp
+	}
+	return fixedPoint(f, exp1)
 }
 
 // Function subVars computes B{v⃗ ↦ a⃗}.
