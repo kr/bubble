@@ -6,3 +6,7 @@ func f(x, y) {
 func main() {
 	f("hello", "world")
 }
+
+// Output:
+// hello
+// world

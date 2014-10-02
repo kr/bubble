@@ -8,3 +8,10 @@ func main() {
 	println(f(&x))
 	println(callcc(f))
 }
+
+// Output:
+// a
+// b
+// 0
+// a
+// 5

@@ -8,3 +8,6 @@ func main() {
 	}
 	println("done")
 }
+// Output:
+// got1
+// done

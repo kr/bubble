@@ -1,0 +1,10 @@
+Test files are b files with a magic comment at the end.
+This comment is of the form
+
+// Output:
+// line1
+// line2
+
+where line1 and line2 are lines of expected output.
+Leading and trailing whitespace will be ignored when
+comparing the actual output.

@@ -5,3 +5,5 @@ func f(x, y) {
 func main() {
 	f(1)
 }
+// Output:
+// undefined
