@@ -8,7 +8,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"go/token"
 	"io"
 	"io/ioutil"
@@ -21,14 +20,12 @@ import (
 	"github.com/kr/bubble/naivegen"
 	"github.com/kr/bubble/optimizer"
 	"github.com/kr/bubble/parser"
-	"github.com/kr/bubble/sem"
 	"github.com/kr/pretty"
 )
 
 var (
 	flagD = flag.Bool("d", false, "debug")
 	flagO = flag.String("o", "", "output file")
-	flagM = flag.Bool("m", false, "eval in process")
 	flagR = flag.Bool("r", true, "run program")
 )
 
@@ -63,14 +60,6 @@ func main() {
 	cexp = optimizer.Optimize(cexp)
 	if *flagD {
 		pretty.Fprintf(os.Stderr, "opt % #v\n", cexp)
-	}
-
-	if *flagM {
-		answer := sem.Eval(cexp, r)
-		if *flagD {
-			fmt.Fprintf(os.Stderr, "answer %T(%v)\n", answer, answer)
-		}
-		return
 	}
 
 	js := naivegen.Gen(cexp, r)
