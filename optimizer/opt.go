@@ -16,7 +16,7 @@ func Optimize(exp cps.Exp) cps.Exp {
 var optimizers = []func(cps.Exp) cps.Exp{
 	betaCon1,
 	selectFold1,
-	tailCall1,
+	etaReduce1,
 	deadVar1,
 }
 
