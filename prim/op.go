@@ -42,6 +42,11 @@ var opNRes = [...]int{
 	Callcc:  -1, // unused; special case in ../cps/conf.go
 }
 
+var opPure = [...]bool{
+	Lt:   true,
+	Ineq: true,
+}
+
 func (o Op) String() string {
 	return opNames[o]
 }
@@ -58,4 +63,9 @@ func (o Op) NArg() int {
 // NArg returns the number of results this operation yields.
 func (o Op) NRes() int {
 	return opNRes[o]
+}
+
+// Pure returns whether o has no side effects.
+func (o Op) Pure() bool {
+	return int(o) < len(opPure) && opPure[o]
 }

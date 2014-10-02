@@ -17,6 +17,7 @@ var optimizers = []func(cps.Exp) cps.Exp{
 	betaCon1,
 	selectFold1,
 	tailCall1,
+	deadVar1,
 }
 
 // optimize1 performs a single optimization pass:
