@@ -6,7 +6,7 @@ That means JavaScript.
 Don't expect much at this point.
 
 $ go get github.com/kr/bubble
-$ npm install js-beautify # for debug output
+$ npm install -g js-beautify # for debug output
 $ cat >hello.b
 func main() {
     println("hello, world")
