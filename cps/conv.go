@@ -1,7 +1,7 @@
 package cps
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/kr/bubble/fun"
 	"github.com/kr/bubble/prim"
@@ -171,7 +171,8 @@ func conv(exp fun.Exp, c func(Value) Exp) Exp {
 			c(f),
 		}
 	}
-	panic("unreached " + fmt.Sprintf("%T", exp))
+	log.Fatalf("unhandled %T", exp)
+	panic("unreached")
 }
 
 func fixfnl(h []fun.Var, b []fun.Fn) (vs []FixEnt) {

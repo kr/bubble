@@ -29,6 +29,10 @@ var (
 	flagR = flag.Bool("r", true, "run program")
 )
 
+func init() {
+	log.SetFlags(log.Lshortfile)
+}
+
 func main() {
 	flag.Parse()
 	src := read(flag.Arg(0))

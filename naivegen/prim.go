@@ -1,6 +1,10 @@
 package naivegen
 
-import "github.com/kr/bubble/prim"
+import (
+	"log"
+
+	"github.com/kr/bubble/prim"
+)
 
 // return value placed in its own statement block
 func genPrim(op prim.Op, dl, wl, cl []string) string {
@@ -16,5 +20,6 @@ func genPrim(op prim.Op, dl, wl, cl []string) string {
 	case prim.Ineq:
 		return `if (` + dl[0] + ` !== ` + dl[1] + `) { ` + cl[0] + ` } else { ` + cl[1] + ` }`
 	}
+	log.Fatalf("unhandled %v\n", op)
 	panic("unreached")
 }

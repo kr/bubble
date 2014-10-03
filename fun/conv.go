@@ -82,7 +82,7 @@ func conv(node ast.Node, r env) Exp {
 		params := []*ast.Ident{{"x"}, {"y"}, {"z"}}
 		return convfunc(params, node.Body, r)
 	default:
-		log.Printf("%T", node)
+		log.Fatalf("unhandled %T", node)
 	}
 	panic("unreached")
 }

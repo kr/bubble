@@ -2,6 +2,7 @@ package naivegen
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 
@@ -75,7 +76,7 @@ func gen(exp cps.Exp) string {
 		}
 		return s + "}"
 	}
-	fmt.Printf("exp %T\n", exp)
+	log.Fatalf("unhandled %T\n", exp)
 	panic("unreached")
 }
 
@@ -106,6 +107,7 @@ func genVal(v cps.Value) string {
 		}
 		return jsvar(v)
 	}
+	log.Fatalf("unhandled %T\n", v)
 	panic("unreached")
 }
 
