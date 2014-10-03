@@ -21,10 +21,10 @@ func Convert(p *ast.Program) Exp {
 
 // env maps names to Var identities
 // it keeps track of lexical scope
-type env func(name *ast.Ident) Exp
+type env func(name string) Exp
 
-func env0(name *ast.Ident) Exp {
-	panic("undefined: " + name.Name)
+func env0(name string) Exp {
+	panic("undefined: " + name)
 }
 
 // bindvar augments r with a newly introduced Var bound to name.
@@ -36,8 +36,8 @@ func bindvar(r env, name *ast.Ident) (env, Var) {
 // e must be a sanitary expression
 // (e.g. var, literal constant int, or operator)
 func bind(r env, name string, e Exp) env {
-	return func(get *ast.Ident) Exp {
-		if get.Name == name {
+	return func(get string) Exp {
+		if get == name {
 			return e
 		}
 		return r(get)
@@ -47,7 +47,7 @@ func bind(r env, name string, e Exp) env {
 func conv(node ast.Node, r env) Exp {
 	switch node := node.(type) {
 	case *ast.Ident:
-		return r(node)
+		return r(node.Name)
 	case *ast.BasicLit:
 		return convlit(node.Kind, node.Value)
 	case *ast.CallExpr:
