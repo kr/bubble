@@ -185,7 +185,7 @@ func (p *parser) parseExprStmt() ast.Stmt {
 func (p *parser) parseExpr() ast.Expr {
 	e := p.parseTerm()
 	switch t := p.tok; t {
-	case token.ADD:
+	case token.ADD, token.SUB:
 		p.next()
 		return &ast.BinaryExpr{X: e, Op: t, Y: p.parseExpr()}
 	}
@@ -195,7 +195,7 @@ func (p *parser) parseExpr() ast.Expr {
 func (p *parser) parseTerm() ast.Expr {
 	e := p.parseCall()
 	switch t := p.tok; t {
-	case token.MUL:
+	case token.MUL, token.QUO:
 		p.next()
 		return &ast.BinaryExpr{X: e, Op: t, Y: p.parseTerm()}
 	}
