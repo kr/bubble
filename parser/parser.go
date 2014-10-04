@@ -239,8 +239,10 @@ func (p *parser) parseAtom() ast.Expr {
 func (p *parser) parseFuncLit() ast.Expr {
 	p.want(token.FUNC)
 	p.want(token.LPAREN)
-	// TODO(kr): parse params
-	params := []*ast.Ident{{"x"}}
+	var params []*ast.Ident
+	if p.tok != token.RPAREN {
+		params = p.parseVarList()
+	}
 	p.want(token.RPAREN)
 	body := p.parseBlockStmt()
 	return &ast.FuncLit{Params: params, Body: body}

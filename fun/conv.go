@@ -56,7 +56,7 @@ func conv(node ast.Node, r env) Exp {
 		el := []Exp{conv(node.X, r), conv(node.Y, r)}
 		return App{convprim(node.Op), Record(el)}
 	case *ast.FuncLit:
-		return Fn{newVar(""), conv(node.Body, r)}
+		return convfunc(node.Params, node.Body, r)
 	case *ast.BlockStmt:
 		return convseq(node.List, r)
 	case *ast.IfStmt:
