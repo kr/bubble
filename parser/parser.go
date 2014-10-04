@@ -184,20 +184,20 @@ func (p *parser) parseExprStmt() ast.Stmt {
 
 func (p *parser) parseExpr() ast.Expr {
 	e := p.parseTerm()
-	switch t := p.tok; t {
-	case token.ADD, token.SUB:
+	for p.tok == token.ADD || p.tok == token.SUB {
+		t := p.tok
 		p.next()
-		return &ast.BinaryExpr{X: e, Op: t, Y: p.parseExpr()}
+		e = &ast.BinaryExpr{X: e, Op: t, Y: p.parseTerm()}
 	}
 	return e
 }
 
 func (p *parser) parseTerm() ast.Expr {
 	e := p.parseCall()
-	switch t := p.tok; t {
-	case token.MUL, token.QUO:
+	for p.tok == token.MUL || p.tok == token.QUO {
+		t := p.tok
 		p.next()
-		return &ast.BinaryExpr{X: e, Op: t, Y: p.parseTerm()}
+		e = &ast.BinaryExpr{X: e, Op: t, Y: p.parseCall()}
 	}
 	return e
 }
