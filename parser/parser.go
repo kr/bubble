@@ -138,6 +138,8 @@ func (p *parser) parseStmt() ast.Stmt {
 	switch p.tok {
 	case token.IF:
 		return p.parseIf()
+	case token.RETURN:
+		return p.parseReturn()
 	default:
 		return p.parseExprStmt()
 	}
@@ -160,6 +162,12 @@ func (p *parser) parseIf() ast.Stmt {
 		}
 	}
 	return s
+}
+
+func (p *parser) parseReturn() *ast.ReturnStmt {
+	p.want(token.RETURN)
+	x := p.parseExpr()
+	return &ast.ReturnStmt{x}
 }
 
 func (p *parser) parseExprStmt() ast.Stmt {

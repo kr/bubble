@@ -84,7 +84,7 @@ type Sequence struct {
 }
 
 type ReturnStmt struct {
-	Values []Expr
+	V Expr
 }
 
 type CallExpr struct {

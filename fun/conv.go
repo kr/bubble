@@ -78,6 +78,8 @@ func conv(node ast.Node, r env) Exp {
 		}
 		main := &ast.CallExpr{&ast.Ident{"main"}, nil}
 		return convfix(fl, main, r)
+	case *ast.ReturnStmt:
+		return App{r("return"), Record{conv(node.V, r)}}
 	case *ast.ShortFuncLit:
 		params := []*ast.Ident{{"x"}, {"y"}, {"z"}}
 		return convfunc(params, node.Body, r)
@@ -145,9 +147,19 @@ func convfunc(params []*ast.Ident, body ast.Node, r env) Fn {
 		r, p = bindvar(r, s)
 		pl = append(pl, p)
 	}
-	exp := conv(body, r)
+	exp := convfuncbody(body, r)
 	for i, p := range pl {
 		exp = App{Fn{p, exp}, Select{i, v}}
 	}
 	return Fn{v, exp}
+}
+
+// save continuation as "return", evaluate body
+func convfuncbody(body ast.Node, r env) Exp {
+	rec := newVar("")
+	ret := newVar("")
+	r = bind(r, "return", ret)
+	return App{Prim(prim.Callcc), Record{Fn{rec,
+		App{Fn{ret, conv(body, r)}, Select{0, rec}},
+	}}}
 }

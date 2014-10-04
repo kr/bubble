@@ -5,3 +5,5 @@ func add1(x) {
 func main() {
 	println(add1(1))
 }
+// Output:
+// 2
