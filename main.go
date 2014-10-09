@@ -8,19 +8,12 @@ package main
 
 import (
 	"flag"
-	"go/token"
-	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 
-	"github.com/kr/bubble/cps"
-	"github.com/kr/bubble/fun"
-	"github.com/kr/bubble/naivegen"
-	"github.com/kr/bubble/optimizer"
-	"github.com/kr/bubble/parser"
-	"github.com/kr/pretty"
+	"github.com/kr/bubble/build"
 )
 
 var (
@@ -35,90 +28,43 @@ func init() {
 
 func main() {
 	flag.Parse()
-	src := read(flag.Arg(0))
-
-	fileSet := token.NewFileSet()
-	fileSet.AddFile(flag.Arg(0), -1, len(src))
-	var mode parser.Mode
+	var mode int
 	if *flagD {
-		mode |= parser.Debug
-	}
-	ast, err := parser.Parse(fileSet, mode)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	if *flagD {
-		pretty.Fprintf(os.Stderr, "% #v\n", ast)
+		mode |= build.Debug
 	}
 
-	funp := fun.Convert(ast)
-	if *flagD {
-		pretty.Fprintf(os.Stderr, "% #v\n", funp)
-	}
+	var (
+		targ *os.File
+		err  error
+	)
 
-	cexp, r := cps.Convert(funp)
-	if *flagD {
-		pretty.Fprintf(os.Stderr, "% #v\n", cexp)
-	}
-
-	cexp = optimizer.Optimize(cexp)
-	if *flagD {
-		pretty.Fprintf(os.Stderr, "opt % #v\n", cexp)
-	}
-
-	js := naivegen.Gen(cexp, r)
-	if *flagD {
-		cmd := exec.Command("js-beautify", "-f", "-")
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		w, err := cmd.StdinPipe()
+	if *flagO != "" {
+		targ, err = os.Create(*flagO)
 		if err != nil {
 			log.Fatalln(err)
 		}
-		err = cmd.Start()
-		_, err = io.WriteString(w, js)
+	} else {
+		targ, err = ioutil.TempFile("", "bubble")
 		if err != nil {
 			log.Fatalln(err)
 		}
-		w.Close()
-		cmd.Wait()
+		os.Remove(targ.Name())
 	}
 
-	var fout io.Writer
-	switch {
-	case *flagO != "":
-		fout, err = os.Create(*flagO)
-	case *flagR:
-		cmd := exec.Command("node")
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		w, err := cmd.StdinPipe()
+	err = build.BuildFile(targ, flag.Arg(0), mode)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	if *flagO == "" && *flagR {
+		targ.Seek(0, 0)
+		c := exec.Command("node")
+		c.Stdin = targ
+		c.Stdout = os.Stdout
+		c.Stderr = os.Stderr
+		err = c.Run()
 		if err != nil {
 			log.Fatalln(err)
 		}
-		err = cmd.Start()
-		defer cmd.Wait()
-		defer w.Close()
-		fout = w
-	default:
-		return
 	}
-
-	_, err = io.WriteString(fout, js)
-	if err != nil {
-		log.Fatalln(err)
-	}
-}
-
-func read(name string) []byte {
-	f, err := os.Open(name)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer f.Close()
-	b, err := ioutil.ReadAll(f)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	return b
 }

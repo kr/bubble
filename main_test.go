@@ -2,8 +2,6 @@ package main
 
 import (
 	"bytes"
-	"go/token"
-	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -11,11 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kr/bubble/cps"
-	"github.com/kr/bubble/fun"
-	"github.com/kr/bubble/naivegen"
-	"github.com/kr/bubble/optimizer"
-	"github.com/kr/bubble/parser"
+	"github.com/kr/bubble/build"
 )
 
 func TestCompile(t *testing.T) {
@@ -29,7 +23,11 @@ func TestCompile(t *testing.T) {
 }
 
 func testonefile(t *testing.T, name string) {
-	src := read(name)
+	src, err := ioutil.ReadFile(name)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 	const magic = "\n// Output:"
 	p := bytes.Index(src, []byte(magic))
 	if p < 0 {
@@ -39,26 +37,17 @@ func testonefile(t *testing.T, name string) {
 		strings.Replace(string(src[p+len(magic):]), "\n// ", "\n", -1),
 	)
 
-	fileSet := token.NewFileSet()
-	fileSet.AddFile(name, -1, len(src))
-	ast, err := parser.Parse(fileSet, 0)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	funp := fun.Convert(ast)
-	cexp, r := cps.Convert(funp)
-	cexp = optimizer.Optimize(cexp)
-	js := naivegen.Gen(cexp, r)
-
 	tmpf, err := ioutil.TempFile("", "bubbletest")
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	os.Remove(tmpf.Name())
-	io.WriteString(tmpf, js)
+
+	err = build.BuildFile(tmpf, name, 0)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 	tmpf.Seek(0, 0)
 
 	cmd := exec.Command("node")
