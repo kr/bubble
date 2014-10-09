@@ -43,7 +43,7 @@ func testonefile(t *testing.T, name string) {
 		return
 	}
 
-	err = build.BuildFile(tmpf, name, 0)
+	err = build.BuildFiles(tmpf, []string{name}, 0)
 	if err != nil {
 		t.Error(err)
 		return

@@ -51,7 +51,7 @@ func main() {
 		os.Remove(targ.Name())
 	}
 
-	err = build.BuildFile(targ, flag.Arg(0), mode)
+	err = build.BuildFiles(targ, flag.Args(), mode)
 	if err != nil {
 		log.Fatalln(err)
 	}

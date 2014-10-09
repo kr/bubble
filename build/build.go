@@ -1,6 +1,7 @@
 package build
 
 import (
+	"errors"
 	"go/token"
 	"io"
 	"io/ioutil"
@@ -21,14 +22,19 @@ const (
 	Debug = 1 << iota // print debug info to stderr
 )
 
-func BuildFile(w io.Writer, name string, mode int) error {
-	src, err := ioutil.ReadFile(name)
-	if err != nil {
-		return err
+func BuildFiles(w io.Writer, names []string, mode int) error {
+	if len(names) == 0 {
+		return errors.New("must supply at least one file to build")
 	}
-
 	fileSet := token.NewFileSet()
-	fileSet.AddFile(name, -1, len(src))
+	for _, name := range names {
+		src, err := ioutil.ReadFile(name)
+		if err != nil {
+			return err
+		}
+
+		fileSet.AddFile(name, -1, len(src))
+	}
 	var pmode parser.Mode
 	if mode&Debug != 0 {
 		pmode |= parser.Debug
