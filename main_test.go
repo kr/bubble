@@ -25,7 +25,7 @@ func TestCompile(t *testing.T) {
 func testonefile(t *testing.T, name string) {
 	src, err := ioutil.ReadFile(name)
 	if err != nil {
-		t.Error(err)
+		t.Error(name, err)
 		return
 	}
 	const magic = "\n// Output:"
@@ -39,13 +39,13 @@ func testonefile(t *testing.T, name string) {
 
 	tmpf, err := ioutil.TempFile("", "bubbletest")
 	if err != nil {
-		t.Error(err)
+		t.Error(name, err)
 		return
 	}
 
 	err = build.BuildFiles(tmpf, []string{name}, 0)
 	if err != nil {
-		t.Error(err)
+		t.Error(name, err)
 		return
 	}
 	tmpf.Seek(0, 0)
@@ -55,7 +55,7 @@ func testonefile(t *testing.T, name string) {
 	cmd.Stderr = os.Stderr
 	out, err := cmd.Output()
 	if err != nil {
-		t.Error(err)
+		t.Error(name, err)
 		return
 	}
 

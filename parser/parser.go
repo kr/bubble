@@ -5,8 +5,8 @@ import (
 	"go/scanner"
 	"go/token"
 	"io/ioutil"
-	"log"
 	"os"
+	"strings"
 
 	"github.com/kr/bubble/ast"
 )
@@ -37,9 +37,8 @@ func (p *parser) next() {
 
 func (p *parser) want(tok token.Token) {
 	if p.tok != tok {
-		pos := p.fileSet.Position(p.pos)
 		// TODO(kr): don't crash here
-		log.Fatalln(pos, "error tok =", p.tok, "want", tok)
+		p.errorf("error tok = %v want %v", p.tok, tok)
 	}
 	p.next()
 }
@@ -90,7 +89,7 @@ func (p *parser) parseFile(f *token.File) (*ast.File, error) {
 			p.want(token.SEMICOLON)
 		default:
 			// TODO(kr): don't crash here
-			log.Fatalln("parse error", p.pos, p.tok, p.lit)
+			p.errorf("unexpected: %v", p.tok)
 		}
 	}
 }
@@ -158,7 +157,7 @@ func (p *parser) parseIf() ast.Stmt {
 		case token.LBRACE:
 			s.Else = p.parseBlockStmt()
 		default:
-			log.Fatalln(p.fileSet.Position(p.pos), "expected if or {")
+			p.errorf("expected if or {")
 		}
 	}
 	return s
@@ -240,7 +239,7 @@ func (p *parser) parseAtom() ast.Expr {
 		return p.parseExpr()
 	}
 	// TODO(kr): don't crash here
-	log.Fatalln(p.fileSet.Position(p.pos), "error tok =", p.tok, "want ident or literal")
+	p.errorf("error tok = %v want ident or literal", p.tok)
 	return nil
 }
 
@@ -254,6 +253,16 @@ func (p *parser) parseFuncLit() ast.Expr {
 	p.want(token.RPAREN)
 	body := p.parseBlockStmt()
 	return &ast.FuncLit{Params: params, Body: body}
+}
+
+// errorf prints the current position p.pos followed by
+// a formatted error message.
+func (p *parser) errorf(format string, v ...interface{}) {
+	s := p.fileSet.Position(p.pos)
+	v = append([]interface{}{s}, v...)
+	format = strings.TrimSpace(format) + "\n"
+	fmt.Fprintf(os.Stderr, "%s: "+format, v...)
+	os.Exit(1)
 }
 
 func readSource(name string) ([]byte, error) {
