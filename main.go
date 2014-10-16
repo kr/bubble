@@ -28,9 +28,15 @@ func init() {
 
 func main() {
 	flag.Parse()
-	var mode int
 	if *flagD {
-		mode |= build.Debug
+		build.Mode |= build.Debug
+	}
+
+	if s := os.Getenv("BUBBLEROOT"); s != "" {
+		build.BUBBLEROOT = s
+	}
+	if s := os.Getenv("BUBBLEPATH"); s != "" {
+		build.BUBBLEPATH = s
 	}
 
 	var (
@@ -51,7 +57,7 @@ func main() {
 		os.Remove(targ.Name())
 	}
 
-	err = build.BuildFiles(targ, flag.Args(), mode)
+	err = build.Build(targ, flag.Args()...)
 	if err != nil {
 		log.Fatalln(err)
 	}

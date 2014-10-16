@@ -47,11 +47,11 @@ func handleError(pos token.Position, msg string) {
 	fmt.Fprintln(os.Stderr, "error", pos, msg)
 }
 
-func Parse(fset *token.FileSet, mode Mode) (*ast.Program, error) {
+func Parse(fset *token.FileSet, mode Mode) (*ast.Package, error) {
 	var p parser
 	p.mode = mode
 	p.fileSet = fset
-	prog := new(ast.Program)
+	pkg := new(ast.Package)
 	var err error
 	fset.Iterate(func(f *token.File) bool {
 		var file *ast.File
@@ -59,13 +59,13 @@ func Parse(fset *token.FileSet, mode Mode) (*ast.Program, error) {
 		if err != nil {
 			return false
 		}
-		prog.Files = append(prog.Files, file)
+		pkg.Files = append(pkg.Files, file)
 		return true
 	})
 	if err != nil {
 		return nil, err
 	}
-	return prog, nil
+	return pkg, nil
 }
 
 func (p *parser) parseFile(f *token.File) (*ast.File, error) {
@@ -76,10 +76,13 @@ func (p *parser) parseFile(f *token.File) (*ast.File, error) {
 	p.scanner.Init(f, text, handleError, 0)
 	file := new(ast.File)
 	p.next()
+	for p.tok == token.IMPORT {
+		imps := p.parseImportStmt()
+		file.Imports = append(file.Imports, imps...)
+		p.want(token.SEMICOLON)
+	}
 	for {
 		switch p.tok {
-		case token.EOF:
-			return file, nil
 		case token.FUNC:
 			x, err := p.parseFuncDecl()
 			if err != nil {
@@ -87,10 +90,26 @@ func (p *parser) parseFile(f *token.File) (*ast.File, error) {
 			}
 			file.Funcs = append(file.Funcs, x)
 			p.want(token.SEMICOLON)
+		case token.EOF:
+			return file, nil
+		case token.IMPORT:
+			p.errorf("import after declaration")
 		default:
 			// TODO(kr): don't crash here
 			p.errorf("unexpected: %v", p.tok)
 		}
+	}
+}
+
+func (p *parser) parseImportStmt() []*ast.ImportSpec {
+	p.want(token.IMPORT)
+	// TODO(kr): imports grouped with parentheses
+	if p.tok != token.STRING {
+		p.errorf("error tok = %v want string", p.tok)
+	}
+	defer p.next()
+	return []*ast.ImportSpec{
+		{Path: &ast.BasicLit{p.tok, p.lit}},
 	}
 }
 
@@ -202,7 +221,7 @@ func (p *parser) parseTerm() ast.Expr {
 }
 
 func (p *parser) parseCall() ast.Expr {
-	x := p.parseAtom()
+	x := p.parseSel()
 	if p.tok != token.LPAREN {
 		return x
 	}
@@ -217,6 +236,17 @@ func (p *parser) parseCall() ast.Expr {
 	}
 	p.want(token.RPAREN)
 	return call
+}
+
+func (p *parser) parseSel() ast.Expr {
+	x := p.parseAtom()
+	for p.tok == token.PERIOD {
+		p.next()
+		lit := p.lit
+		p.want(token.IDENT)
+		x = &ast.SelectorExpr{X: x, Sel: &ast.Ident{lit}}
+	}
+	return x
 }
 
 func (p *parser) parseAtom() ast.Expr {

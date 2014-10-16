@@ -7,13 +7,26 @@ import (
 	"github.com/kr/bubble/prim"
 )
 
-// Convert converts into CPS from the minimal functional
-// language defined in package fun.
-func Convert(exp fun.Exp) (Exp, Var) {
+// Convert converts into CPS
+// from the minimal functional language
+// defined in package fun.
+// Returns the converted expression
+// and an "exit" address
+// (which must be linked separately).
+func Convert(exps []fun.Exp) (Exp, Var) {
 	r := newVar("exit")
-	return conv(exp, func(v Value) Exp {
+	return convseq(exps, func(v Value) Exp {
 		return App{r, []Value{v}}
 	}), r
+}
+
+func convseq(exps []fun.Exp, c func(Value) Exp) Exp {
+	if len(exps) == 1 {
+		return conv(exps[0], c)
+	}
+	return conv(exps[0], func(v Value) Exp {
+		return convseq(exps[1:], c)
+	})
 }
 
 func conv(exp fun.Exp, c func(Value) Exp) Exp {

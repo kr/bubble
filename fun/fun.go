@@ -23,6 +23,7 @@ func (Select) exp() {}
 func (String) exp() {}
 func (Switch) exp() {}
 func (Var) exp()    {}
+func (pkg) exp()    {}
 
 type Value interface {
 	Exp
@@ -33,6 +34,7 @@ func (Int) value()    {}
 func (Prim) value()   {}
 func (String) value() {}
 func (Var) value()    {}
+func (pkg) value()    {}
 
 type Var struct {
 	ID   uint
@@ -45,6 +47,10 @@ var nextVar uint
 func newVar(name string) Var {
 	nextVar++
 	return Var{ID: nextVar, Name: name}
+}
+
+type pkg struct {
+	tab Tab
 }
 
 type Int int

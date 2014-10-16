@@ -2,6 +2,7 @@ package fun
 
 import (
 	"log"
+	"path"
 	"strconv"
 
 	"go/token"
@@ -10,42 +11,63 @@ import (
 	"github.com/kr/bubble/prim"
 )
 
-func Convert(p *ast.Program) Exp {
-	r := env0
-	r = bind(r, "false", Int(0))
-	r = bind(r, "true", Int(1))
-	r = bind(r, "println", Prim(prim.Println))
-	r = bind(r, "callcc", Prim(prim.Callcc))
-	return conv(p, r)
+// exported symbol table for a package
+type Tab struct {
+	sym map[string]Var
 }
 
-// env maps names to Var identities
-// it keeps track of lexical scope
-type env func(name string) Value
+// Convert converts p to a functional expression.
+// Function pkgtab must return the symbol table
+// from a previous call to Convert
+// for any package imported by p.
+func Convert(p *ast.Package, pkgtab func(importPath string) Tab) (Exp, Tab) {
+	tab := Tab{make(map[string]Var)}
+	fix := Fix{Body: Int(0)}
+	var inits []Var
+	r := globalEnv
 
-func env0(name string) Value {
-	panic("undefined: " + name)
-}
-
-// bindvar augments r with a newly introduced Var bound to name.
-func bindvar(r env, name *ast.Ident) (env, Var) {
-	v := newVar(name.Name)
-	return bind(r, name.Name, v), v
-}
-
-func bind(r env, name string, v Value) env {
-	return func(get string) Value {
-		if get == name {
-			return v
+	// first define the environment r containing all funcs
+	for _, file := range p.Files {
+		for _, f := range file.Funcs {
+			var v Var
+			if f.Name.Name == "init" {
+				v = newVar("init") // do not bind init
+				inits = append(inits, v)
+			} else {
+				r, v = bindvar(r, f.Name)
+			}
+			if p.Name == "main" && f.Name.Name == "main" {
+				fix.Body = App{v, Int(0)}
+			}
+			if f.Name.IsExported() {
+				tab.sym[f.Name.Name] = v
+			}
+			fix.Names = append(fix.Names, v)
 		}
-		return r(get)
 	}
+
+	// then convert the funcs using r
+	for _, file := range p.Files {
+		r1 := bindimports(r, file.Imports, pkgtab)
+		for _, f := range file.Funcs {
+			fix.Fns = append(fix.Fns, convfunc(f.Params, f.Body, r1))
+		}
+	}
+
+	for _, f := range inits {
+		fix.Body = App{Fn{newVar(""), fix.Body}, App{f, Int(0)}}
+	}
+	return fix, tab
 }
 
 func conv(node ast.Node, r env) Exp {
 	switch node := node.(type) {
 	case *ast.Ident:
-		return r(node.Name)
+		v := r(node.Name)
+		if _, ok := v.(pkg); ok {
+			log.Fatal("use of package " + node.Name + " without selector")
+		}
+		return v
 	case *ast.BasicLit:
 		return convlit(node.Kind, node.Value)
 	case *ast.CallExpr:
@@ -69,15 +91,17 @@ func conv(node ast.Node, r env) Exp {
 		}
 	case *ast.ExprStmt:
 		return conv(node.X, r)
-	case *ast.Program:
-		var fl []*ast.FuncDecl
-		for _, file := range node.Files {
-			fl = append(fl, file.Funcs...)
-		}
-		main := &ast.CallExpr{&ast.Ident{"main"}, nil}
-		return convfix(fl, main, r)
 	case *ast.ReturnStmt:
 		return App{r("return"), Record{conv(node.V, r)}}
+	case *ast.SelectorExpr:
+		// If node.X is a package, don't call conv.
+		// A package is not a valid expression.
+		if id, ok := node.X.(*ast.Ident); ok {
+			if p, ok := r(id.Name).(pkg); ok {
+				return p.tab.sym[node.Sel.Name]
+			}
+		}
+		log.Fatalf("cannot select from non-package %v", node.X)
 	case *ast.ShortFuncLit:
 		params := []*ast.Ident{{"x"}, {"y"}, {"z"}}
 		return convfunc(params, node.Body, r)
@@ -123,20 +147,6 @@ func convl(xl []ast.Expr, r env) (el []Exp) {
 	return el
 }
 
-func convfix(fl []*ast.FuncDecl, exp ast.Node, r env) Exp {
-	var fix Fix
-	for _, f := range fl {
-		var v Var
-		r, v = bindvar(r, f.Name)
-		fix.Names = append(fix.Names, v)
-	}
-	fix.Body = conv(exp, r)
-	for _, f := range fl {
-		fix.Fns = append(fix.Fns, convfunc(f.Params, f.Body, r))
-	}
-	return fix
-}
-
 func convfunc(params []*ast.Ident, body ast.Node, r env) Fn {
 	v := newVar("")
 	var pl []Var
@@ -160,4 +170,60 @@ func convfuncbody(body ast.Node, r env) Exp {
 	return App{Prim(prim.Callcc), Record{Fn{rec,
 		App{Fn{ret, conv(body, r)}, Select{0, rec}},
 	}}}
+}
+
+var globalEnv env
+
+func init() {
+	r := env0
+	r = bind(r, "false", Int(0))
+	r = bind(r, "true", Int(1))
+	r = bind(r, "println", Prim(prim.Println))
+	r = bind(r, "callcc", Prim(prim.Callcc))
+	globalEnv = r
+}
+
+// env maps names to Var identities
+// it keeps track of lexical scope
+type env func(name string) Value
+
+func env0(name string) Value {
+	panic("undefined: " + name)
+}
+
+func bind(r env, name string, v Value) env {
+	return func(get string) Value {
+		if get == name {
+			return v
+		}
+		return r(get)
+	}
+}
+
+// bindvar augments r with a newly introduced Var bound to name.
+func bindvar(r env, name *ast.Ident) (env, Var) {
+	v := newVar(name.Name)
+	return bind(r, name.Name, v), v
+}
+
+// bindimports augments r with a binding
+// for each package listed in a.
+func bindimports(r env, a []*ast.ImportSpec, pkgtab func(string) Tab) env {
+	for _, spec := range a {
+		// TODO(kr): use local name from import spec
+		name := importPathName(spec.ImportPath())
+		dep := pkgtab(spec.ImportPath())
+		r = bind(r, name, pkg{dep})
+	}
+	return r
+}
+
+func importPathName(importPath string) string {
+	s := path.Base(importPath)
+	for i, c := range s {
+		if !('0' <= c && c <= '9' || 'a' <= c && c <= 'z' || 'A' <= c && c <= 'Z' || c == '_') {
+			return s[:i]
+		}
+	}
+	return s
 }

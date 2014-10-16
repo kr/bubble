@@ -2,6 +2,9 @@ package ast
 
 import (
 	"go/token"
+	"strconv"
+	"unicode"
+	"unicode/utf8"
 )
 
 type Node interface {
@@ -18,8 +21,9 @@ func (*FuncDecl) node()     {}
 func (*FuncLit) node()      {}
 func (*Ident) node()        {}
 func (*IfStmt) node()       {}
-func (*Program) node()      {}
+func (*Package) node()      {}
 func (*ReturnStmt) node()   {}
+func (*SelectorExpr) node() {}
 func (*ShortFuncLit) node() {}
 
 type Expr interface {
@@ -33,6 +37,7 @@ func (*CallExpr) exp()     {}
 func (*FuncDecl) exp()     {}
 func (*FuncLit) exp()      {}
 func (*Ident) exp()        {}
+func (*SelectorExpr) exp() {}
 func (*ShortFuncLit) exp() {}
 
 type Stmt interface {
@@ -46,18 +51,28 @@ func (*ExprStmt) stmt()   {}
 func (*IfStmt) stmt()     {}
 func (*ReturnStmt) stmt() {}
 
-type Program struct {
+type Package struct {
+	Name  string
 	Files []*File
 }
 
 type File struct {
-	Funcs []*FuncDecl
+	Imports []*ImportSpec
+	Funcs   []*FuncDecl
 }
 
 type IfStmt struct {
 	Cond Expr
 	Body *BlockStmt
 	Else Stmt // BlockStmt, IfStmt, or nil
+}
+
+type ImportSpec struct {
+	Path *BasicLit // import path (always a string)
+}
+
+func (is *ImportSpec) ImportPath() string {
+	return is.Path.String()
 }
 
 type FuncDecl struct {
@@ -103,8 +118,25 @@ type BasicLit struct {
 	Value string // literal string
 }
 
+// Returns the unquoted string value represented by b.
+// Result is undefined if b is not a string.
+func (b *BasicLit) String() string {
+	s, _ := strconv.Unquote(b.Value)
+	return s
+}
+
 type Ident struct {
 	Name string
+}
+
+func (id *Ident) IsExported() bool { return IsExported(id.Name) }
+
+// Symbols starting with anything other than
+// a lower case letter and _ are exported.
+// (This means upper case and case-less characters.)
+func IsExported(name string) bool {
+	ch, _ := utf8.DecodeRuneInString(name)
+	return !unicode.IsLower(ch) && ch != '_'
 }
 
 type AssignStmt struct {
@@ -115,4 +147,9 @@ type AssignStmt struct {
 
 type ExprStmt struct {
 	X Expr
+}
+
+type SelectorExpr struct {
+	X   Expr
+	Sel *Ident
 }

@@ -43,7 +43,7 @@ func testonefile(t *testing.T, name string) {
 		return
 	}
 
-	err = build.BuildFiles(tmpf, []string{name}, 0)
+	err = build.Build(tmpf, name)
 	if err != nil {
 		t.Error(name, err)
 		return
@@ -60,6 +60,9 @@ func testonefile(t *testing.T, name string) {
 	}
 
 	got := strings.TrimSpace(string(out))
+	if testing.Verbose() {
+		t.Log(name + "\n" + got)
+	}
 	if got != want {
 		t.Errorf("%s got %q want %q", name, got, want)
 	}
