@@ -115,9 +115,14 @@ func (p *parser) parseFile(f *token.File) (*ast.File, error) {
 func (p *parser) parseImportStmt() []*ast.ImportSpec {
 	p.want(token.IMPORT)
 	// TODO(kr): imports grouped with parentheses
+	var name *ast.Ident
+	if p.tok == token.IDENT {
+		name = &ast.Ident{p.lit}
+		p.next()
+	}
 	path := &ast.BasicLit{p.tok, p.lit}
 	p.want(token.STRING)
-	return []*ast.ImportSpec{{Path: path}}
+	return []*ast.ImportSpec{{Name: name, Path: path}}
 }
 
 func (p *parser) parseFuncDecl() (*ast.FuncDecl, error) {

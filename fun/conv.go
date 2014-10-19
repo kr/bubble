@@ -210,9 +210,12 @@ func bindvar(r env, name *ast.Ident) (env, Var) {
 // for each package listed in a.
 func bindimports(r env, a []*ast.ImportSpec, pkgtab func(string) Tab) env {
 	for _, spec := range a {
-		// TODO(kr): use local name from import spec
 		dep := pkgtab(spec.ImportPath())
-		r = bind(r, dep.name, pkg{dep})
+		name := dep.name
+		if spec.Name != nil {
+			name = spec.Name.Name
+		}
+		r = bind(r, name, pkg{dep})
 	}
 	return r
 }

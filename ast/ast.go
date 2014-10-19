@@ -69,6 +69,7 @@ type IfStmt struct {
 }
 
 type ImportSpec struct {
+	Name *Ident    // maybe nil
 	Path *BasicLit // import path (always a string)
 }
 
