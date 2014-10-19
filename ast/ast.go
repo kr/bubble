@@ -73,10 +73,6 @@ type ImportSpec struct {
 	Path *BasicLit // import path (always a string)
 }
 
-func (is *ImportSpec) ImportPath() string {
-	return is.Path.String()
-}
-
 type FuncDecl struct {
 	Name   *Ident
 	Params []*Ident

@@ -104,8 +104,9 @@ func parseDeps(p *pkg, tab []*pkg) ([]*pkg, error) {
 	// TODO(kr): detect cycles
 	for _, f := range p.Files {
 		for _, spec := range f.Imports {
-			if !containsPackage(tab, spec.ImportPath()) {
-				dep, err := parsePackage(spec.ImportPath())
+			path := spec.Path.String()
+			if !containsPackage(tab, path) {
+				dep, err := parsePackage(path)
 				if err != nil {
 					return nil, err
 				}
