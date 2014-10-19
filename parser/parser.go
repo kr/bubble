@@ -211,42 +211,46 @@ func (p *parser) parseExpr() ast.Expr {
 }
 
 func (p *parser) parseTerm() ast.Expr {
-	e := p.parseCall()
+	e := p.parsePrimary()
 	for p.tok == token.MUL || p.tok == token.QUO {
 		t := p.tok
 		p.next()
-		e = &ast.BinaryExpr{X: e, Op: t, Y: p.parseCall()}
+		e = &ast.BinaryExpr{X: e, Op: t, Y: p.parsePrimary()}
 	}
 	return e
 }
 
-func (p *parser) parseCall() ast.Expr {
-	x := p.parseSel()
-	if p.tok != token.LPAREN {
-		return x
+// primary expression (selector, call, etc)
+func (p *parser) parsePrimary() ast.Expr {
+	x := p.parseAtom()
+loop:
+	for {
+		switch p.tok {
+		case token.LPAREN:
+			x = &ast.CallExpr{Fun: x, Args: p.parseArgList()}
+		case token.PERIOD:
+			p.next()
+			lit := p.lit
+			p.want(token.IDENT)
+			x = &ast.SelectorExpr{X: x, Sel: &ast.Ident{lit}}
+		default:
+			break loop
+		}
 	}
-	call := &ast.CallExpr{Fun: x}
+	return x
+}
+
+func (p *parser) parseArgList() (a []ast.Expr) {
 	p.want(token.LPAREN)
 	for p.tok != token.RPAREN {
-		call.Args = append(call.Args, p.parseExpr())
+		a = append(a, p.parseExpr())
 		if p.tok == token.RPAREN {
 			break
 		}
 		p.want(token.COMMA)
 	}
 	p.want(token.RPAREN)
-	return call
-}
-
-func (p *parser) parseSel() ast.Expr {
-	x := p.parseAtom()
-	for p.tok == token.PERIOD {
-		p.next()
-		lit := p.lit
-		p.want(token.IDENT)
-		x = &ast.SelectorExpr{X: x, Sel: &ast.Ident{lit}}
-	}
-	return x
+	return a
 }
 
 func (p *parser) parseAtom() ast.Expr {
