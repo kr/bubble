@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"errors"
 	"fmt"
 	"go/scanner"
 	"go/token"
@@ -60,10 +61,16 @@ func Parse(fset *token.FileSet, mode Mode) (*ast.Package, error) {
 			return false
 		}
 		pkg.Files = append(pkg.Files, file)
+		pkg.Name = file.Name.Name
 		return true
 	})
 	if err != nil {
 		return nil, err
+	}
+	for _, f := range pkg.Files {
+		if f.Name.Name != pkg.Name {
+			return nil, errors.New("multiple packages: " + pkg.Name + " " + f.Name.Name)
+		}
 	}
 	return pkg, nil
 }
@@ -76,6 +83,10 @@ func (p *parser) parseFile(f *token.File) (*ast.File, error) {
 	p.scanner.Init(f, text, handleError, 0)
 	file := new(ast.File)
 	p.next()
+	p.want(token.PACKAGE)
+	file.Name = &ast.Ident{p.lit}
+	p.want(token.IDENT)
+	p.want(token.SEMICOLON)
 	for p.tok == token.IMPORT {
 		imps := p.parseImportStmt()
 		file.Imports = append(file.Imports, imps...)

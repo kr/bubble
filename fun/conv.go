@@ -2,7 +2,6 @@ package fun
 
 import (
 	"log"
-	"path"
 	"strconv"
 
 	"go/token"
@@ -13,7 +12,8 @@ import (
 
 // exported symbol table for a package
 type Tab struct {
-	sym map[string]Var
+	name string
+	sym  map[string]Var
 }
 
 // Convert converts p to a functional expression.
@@ -21,7 +21,7 @@ type Tab struct {
 // from a previous call to Convert
 // for any package imported by p.
 func Convert(p *ast.Package, pkgtab func(importPath string) Tab) (Exp, Tab) {
-	tab := Tab{make(map[string]Var)}
+	tab := Tab{p.Name, make(map[string]Var)}
 	fix := Fix{Body: Int(0)}
 	var inits []Var
 	r := globalEnv
@@ -211,19 +211,8 @@ func bindvar(r env, name *ast.Ident) (env, Var) {
 func bindimports(r env, a []*ast.ImportSpec, pkgtab func(string) Tab) env {
 	for _, spec := range a {
 		// TODO(kr): use local name from import spec
-		name := importPathName(spec.ImportPath())
 		dep := pkgtab(spec.ImportPath())
-		r = bind(r, name, pkg{dep})
+		r = bind(r, dep.name, pkg{dep})
 	}
 	return r
-}
-
-func importPathName(importPath string) string {
-	s := path.Base(importPath)
-	for i, c := range s {
-		if !('0' <= c && c <= '9' || 'a' <= c && c <= 'z' || 'A' <= c && c <= 'Z' || c == '_') {
-			return s[:i]
-		}
-	}
-	return s
 }

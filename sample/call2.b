@@ -1,3 +1,5 @@
+package main
+
 func f(x, y) {
 	println(x)
 	println(y)

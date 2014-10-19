@@ -8,6 +8,7 @@ Don't expect much at this point.
 $ go get github.com/kr/bubble
 $ npm install -g js-beautify # for debug output
 $ cat >hello.b
+package main
 func main() {
     println("hello, world")
 }

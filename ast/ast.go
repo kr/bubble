@@ -57,6 +57,7 @@ type Package struct {
 }
 
 type File struct {
+	Name    *Ident
 	Imports []*ImportSpec
 	Funcs   []*FuncDecl
 }

@@ -1,3 +1,5 @@
+package main
+
 func main() {
 	if 0+0 {
 		println("got0")
@@ -8,6 +10,7 @@ func main() {
 	}
 	println("done")
 }
+
 // Output:
 // got1
 // done

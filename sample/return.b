@@ -1,3 +1,5 @@
+package main
+
 func add1(x) {
 	return x + 1
 }
@@ -5,5 +7,6 @@ func add1(x) {
 func main() {
 	println(add1(1))
 }
+
 // Output:
 // 2

@@ -1,3 +1,5 @@
+package main
+
 func f(x, y) {
 	println(y)
 }
@@ -5,5 +7,6 @@ func f(x, y) {
 func main() {
 	f(1)
 }
+
 // Output:
 // undefined

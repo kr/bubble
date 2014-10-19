@@ -1,3 +1,5 @@
+package main
+
 func f(k) {
 	println("a")
 	k(5)

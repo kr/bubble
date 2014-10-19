@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 
 	"github.com/kr/bubble/ast"
@@ -97,7 +96,6 @@ func parseProgram(files []string) ([]*pkg, error) {
 	if err != nil {
 		return nil, err
 	}
-	main.Name = "main"
 	// TODO(kr): give main a valid import path
 	return parseDeps(main, nil)
 }
@@ -132,7 +130,6 @@ func parsePackage(path string) (*pkg, error) {
 		return nil, err
 	}
 	p.importPath = path
-	p.Name = importPathName(path)
 	return p, nil
 }
 
@@ -192,14 +189,4 @@ func containsPackage(a []*pkg, path string) bool {
 		}
 	}
 	return false
-}
-
-func importPathName(importPath string) string {
-	s := path.Base(importPath)
-	for i, c := range s {
-		if !('0' <= c && c <= '9' || 'a' <= c && c <= 'z' || 'A' <= c && c <= 'Z' || c == '_') {
-			return s[:i]
-		}
-	}
-	return s
 }
