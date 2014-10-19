@@ -128,27 +128,24 @@ func (p *parser) parseFuncDecl() (*ast.FuncDecl, error) {
 	p.want(token.FUNC)
 	name := &ast.Ident{p.lit}
 	p.want(token.IDENT)
-	p.want(token.LPAREN)
-	var params []*ast.Ident
-	if p.tok != token.RPAREN {
-		params = p.parseVarList()
-	}
-	p.want(token.RPAREN)
+	params := p.parseVarList()
 	body := p.parseBlockStmt()
 	return &ast.FuncDecl{Name: name, Params: params, Body: body}, nil
 }
 
-func (p *parser) parseVarList() []*ast.Ident {
-	var vars []*ast.Ident
-	for p.tok == token.IDENT {
-		vars = append(vars, &ast.Ident{p.lit})
-		p.next()
-		if p.tok != token.COMMA {
+func (p *parser) parseVarList() (a []*ast.Ident) {
+	p.want(token.LPAREN)
+	for p.tok != token.RPAREN {
+		lit := p.lit
+		p.want(token.IDENT)
+		a = append(a, &ast.Ident{lit})
+		if p.tok == token.RPAREN {
 			break
 		}
-		p.next()
+		p.want(token.COMMA)
 	}
-	return vars
+	p.want(token.RPAREN)
+	return a
 }
 
 func (p *parser) parseBlockStmt() *ast.BlockStmt {
@@ -288,12 +285,7 @@ func (p *parser) parseAtom() ast.Expr {
 
 func (p *parser) parseFuncLit() ast.Expr {
 	p.want(token.FUNC)
-	p.want(token.LPAREN)
-	var params []*ast.Ident
-	if p.tok != token.RPAREN {
-		params = p.parseVarList()
-	}
-	p.want(token.RPAREN)
+	params := p.parseVarList()
 	body := p.parseBlockStmt()
 	return &ast.FuncLit{Params: params, Body: body}
 }
