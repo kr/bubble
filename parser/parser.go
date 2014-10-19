@@ -234,7 +234,6 @@ func (p *parser) parseTerm() ast.Expr {
 // primary expression (selector, call, etc)
 func (p *parser) parsePrimary() ast.Expr {
 	x := p.parseAtom()
-loop:
 	for {
 		switch p.tok {
 		case token.LPAREN:
@@ -245,10 +244,9 @@ loop:
 			p.want(token.IDENT)
 			x = &ast.SelectorExpr{X: x, Sel: &ast.Ident{lit}}
 		default:
-			break loop
+			return x
 		}
 	}
-	return x
 }
 
 func (p *parser) parseArgList() (a []ast.Expr) {
