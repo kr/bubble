@@ -24,6 +24,16 @@ func (String) exp() {}
 func (Switch) exp() {}
 func (Var) exp()    {}
 
+type Value interface {
+	Exp
+	value()
+}
+
+func (Int) value()    {}
+func (Prim) value()   {}
+func (String) value() {}
+func (Var) value()    {}
+
 type Var struct {
 	ID   uint
 	Name string
